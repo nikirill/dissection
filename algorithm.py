@@ -24,16 +24,18 @@ G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), (
 # Generate all possible subsets of vertices
 subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G.nodes()) + 1))
 subgrs = []
+count = 0
 
 # Find all possible joints with defined complexity
 for subset in subsets:
 	sbgr = nx.subgraph(G, subset)
-	complexity = 0
-	for vertex in sbgr.nodes():
-		complexity += sbgr.node[vertex]['df']
-	complexity -= sbgr.number_of_edges()
-	if complexity <= limit:
-		subgrs.append(sbgr)
+	if nx.is_connected(sbgr):
+		fdegree = 0
+		for vertex in sbgr.nodes():
+			fdegree += sbgr.node[vertex]['df']
+		fdegree -= sbgr.number_of_edges()
+		if fdegree <= limit:
+			subgrs.append(sbgr)
 
 
 for i in range (2, G.number_of_nodes()+1):  #levels of the tree
@@ -43,13 +45,26 @@ for i in range (2, G.number_of_nodes()+1):  #levels of the tree
 		for pair in pairs:
 			if (sorted(pair[0].nodes() + pair[1].nodes()) == sorted(h.nodes())):
 				reachability = True
+				# print(pair[0].nodes(), pair[1].nodes())
 		if reachability == False:
 			subgrs.remove(h)
+			if i == G.number_of_nodes():
+				print("Complexity = ", limit, "is NOT achievable for key recovery")
 		elif i == G.number_of_nodes():
 			print("Complexity = ", limit, "is achievable for key recovery")
 
 
+f = open("solution.txt", 'w')
+pairs = list(combinations(subgrs, 2))
+for pair in pairs:
+	if sorted(pair[0].nodes() + pair[1].nodes()) == sorted(G.nodes()):
+		print
+		f.write(" ".join(sorted(pair[0].nodes())))
+		f.write("  |  ")
+		f.write(" ".join(sorted(pair[1].nodes())))
+		f.write("\n")
 
-for ver in subgrs:
-	print(ver.nodes())
+f.close()
+# for ver in subgrs:
+# 	print(ver.nodes())
 
