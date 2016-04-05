@@ -56,7 +56,6 @@ for subset in subsets:
 solution = [[G]]
 while len(subgrs) >= G.number_of_nodes():
 	level = []
-	biggestSub = 0
 	for leaf in solution[-1]:   # access last discovered level of solution
 		if leaf.number_of_nodes() == 1:
 			level.append(leaf)
@@ -74,16 +73,14 @@ while len(subgrs) >= G.number_of_nodes():
 		if optimum[1] != 0:
 			level.append(optimum[0][0])
 			level.append(optimum[0][1])
-			local_max = max(optimum[0], key=lambda t: t.number_of_nodes()).number_of_nodes()
-			if biggestSub < local_max:
-				biggestSub = local_max
 		else:
 			print("The following component is NOT reachable\n", sorted(leaf.nodes()))
 
 	# add the new tree level
 	solution.append(level)
 	# remove all the subgrs bigger than biggest at current level
-	subgrs = [x for x in subgrs if x.number_of_nodes()<biggestSub]
+	size_limit = max(level, key=lambda t: t.number_of_nodes()).number_of_nodes()
+	subgrs = [x for x in subgrs if x.number_of_nodes() < size_limit]
 
 
 f = open("solution.txt", 'w')
