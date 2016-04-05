@@ -54,6 +54,7 @@ for subset in subsets:
 
 
 solution = [[G]]
+reachability = True
 while len(subgrs) >= G.number_of_nodes():
 	level = []
 	for leaf in solution[-1]:   # access last discovered level of solution
@@ -69,15 +70,18 @@ while len(subgrs) >= G.number_of_nodes():
 				local_min = min(pair, key=lambda t: t.number_of_nodes()).number_of_nodes()
 				if optimum[1] < local_min:
 					optimum = (pair, local_min)
-		
+		# check if there has been a partition and add it
 		if optimum[1] != 0:
 			level.append(optimum[0][0])
 			level.append(optimum[0][1])
 		else:
 			print("The following component is NOT reachable\n", sorted(leaf.nodes()))
+			reachability = False
 
 	# add the new tree level
 	solution.append(level)
+	if reachability != True:
+		break
 	# remove all the subgrs bigger than biggest at current level
 	size_limit = max(level, key=lambda t: t.number_of_nodes()).number_of_nodes()
 	subgrs = [x for x in subgrs if x.number_of_nodes() < size_limit]
