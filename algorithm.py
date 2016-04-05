@@ -24,7 +24,6 @@ G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), (
 # Generate all possible subsets of vertices
 subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G.nodes()) + 1))
 subgrs = []
-count = 0
 
 # Find all possible joints with defined complexity
 for subset in subsets:
@@ -38,33 +37,64 @@ for subset in subsets:
 			subgrs.append(sbgr)
 
 
-for i in range (2, G.number_of_nodes()+1):  #levels of the tree
-	pairs = list(combinations(filter(lambda x: x.number_of_nodes()<i, subgrs), 2)) #all possible pairs below the level
-	for h in filter(lambda igr: igr.number_of_nodes()==i, subgrs): #all subsets on the level
-		reachability = False
+# for i in range (2, G.number_of_nodes()+1):  #levels of the tree
+# 	pairs = list(combinations(filter(lambda x: x.number_of_nodes()<i, subgrs), 2)) #all possible pairs below the level
+# 	for h in filter(lambda igr: igr.number_of_nodes()==i, subgrs): #all subsets on the level
+# 		reachability = False
+# 		for pair in pairs:
+# 			if (sorted(pair[0].nodes() + pair[1].nodes()) == sorted(h.nodes())):
+# 				reachability = True
+# 				# print(pair[0].nodes(), pair[1].nodes())
+# 		if reachability == False:
+# 			subgrs.remove(h)
+# 			if i == G.number_of_nodes():
+# 				print("Complexity = ", limit, "is NOT achievable for key recovery")
+# 		elif i == G.number_of_nodes():
+# 			print("Complexity = ", limit, "is achievable for key recovery")
+
+
+solution = [[G]]
+while len(subgrs) >= G.number_of_nodes():
+	level = []
+	biggestSub = 0
+	for leaf in solution[-1]:   # access last discovered level of solution
+		if leaf.number_of_nodes() == 1:
+			level.append(leaf)
+			continue
+		# find possible pairs of subgraphs to construct current graph
+		pairs = list(combinations(filter(lambda x: x.number_of_nodes()<leaf.number_of_nodes(), subgrs), 2)) #all possible pairs below the level
+		optimum = (pairs[0], 0)
 		for pair in pairs:
-			if (sorted(pair[0].nodes() + pair[1].nodes()) == sorted(h.nodes())):
-				reachability = True
-				# print(pair[0].nodes(), pair[1].nodes())
-		if reachability == False:
-			subgrs.remove(h)
-			if i == G.number_of_nodes():
-				print("Complexity = ", limit, "is NOT achievable for key recovery")
-		elif i == G.number_of_nodes():
-			print("Complexity = ", limit, "is achievable for key recovery")
+			if (sorted(pair[0].nodes() + pair[1].nodes()) == sorted(leaf.nodes())):
+				# we want the most balanced pair so find a pair with maximal min
+				local_min = min(pair, key=lambda t: t.number_of_nodes()).number_of_nodes()
+				if optimum[1] < local_min:
+					optimum = (pair, local_min)
+		
+		if optimum[1] != 0:
+			level.append(optimum[0][0])
+			level.append(optimum[0][1])
+			local_max = max(optimum[0], key=lambda t: t.number_of_nodes()).number_of_nodes()
+			if biggestSub < local_max:
+				biggestSub = local_max
+		else:
+			print("The following component is NOT reachable\n", sorted(leaf.nodes()))
+
+	# add the new tree level
+	solution.append(level)
+	# remove all the subgrs bigger than biggest at current level
+	subgrs = [x for x in subgrs if x.number_of_nodes()<biggestSub]
 
 
 f = open("solution.txt", 'w')
-pairs = list(combinations(subgrs, 2))
-for pair in pairs:
-	if sorted(pair[0].nodes() + pair[1].nodes()) == sorted(G.nodes()):
-		print
-		f.write(" ".join(sorted(pair[0].nodes())))
-		f.write("  |  ")
-		f.write(" ".join(sorted(pair[1].nodes())))
-		f.write("\n")
-
+for line in solution:
+	first = True
+	for element in line:
+		if first == True:
+			first = False
+		else:
+			f.write("   |   ")
+		f.write(" ".join(sorted(element.nodes())))
+	f.write("\n")
 f.close()
-# for ver in subgrs:
-# 	print(ver.nodes())
 
