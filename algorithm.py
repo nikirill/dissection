@@ -87,6 +87,7 @@ while len(subgrs) >= G.number_of_nodes():
 	subgrs = [x for x in subgrs if x.number_of_nodes() < size_limit]
 
 
+# Writing solution to a file
 f = open("solution.txt", 'w')
 for line in solution:
 	first = True
