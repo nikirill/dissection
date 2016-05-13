@@ -22,8 +22,10 @@ G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), (
 
 # Generate all possible subsets of vertices
 subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G.nodes()) + 1))
+subgrs = []
+for subset in subsets:
+	subgrs.append(nx.subgraph(G, subset))
 
-# subgrs = []
 # Find all possible joints with defined complexity
 # for subset in subsets:
 # 	sbgr = nx.subgraph(G, subset)
@@ -44,15 +46,15 @@ def computedf(U):
 	return dfU
 
 def AlgorithmRecovery(K, f):
-	f.write(" ".join(sorted(K)))
+	f.write(" ".join(sorted(K.nodes())))
 	# if len(Best.get(K)[0]) > 1:
 	# 	AlgorithmRecovery(Best.get(K)[0], f)
 
 
 Ci = {}
 Best = {}
-for subset in subsets:
-	Ci[subset] = float("inf")
+for subgr in subgrs:
+	Ci[sorted(subgr.nodes())] = float("inf")
 for vertex in G.nodes():
 	Ci[vertex] = G.node[vertex]['df']  # complexity for each vertex is its df
 
