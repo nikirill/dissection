@@ -42,51 +42,41 @@ def computedf(U):
 	dfU = 0
 	for vertex in U.nodes():
 		dfU += U.node[vertex]['df']
-	dfU -= U.number_of_nodes()
+	dfU -= U.number_of_edges()
 	return dfU
 
-def AlgorithmRecovery(K, f):
+def AlgorithmRecovery(K, i):
 	f.write(" ".join(sorted(K.nodes())))
-	# if len(Best.get(K)[0]) > 1:
-	# 	AlgorithmRecovery(Best.get(K)[0], f)
+	f.write("\n")
+	if Best.get(nodeslist(K))[0].number_of_nodes() > 1:
+		AlgorithmRecovery(Best.get(nodeslist(K))[0], f)
+	if Best.get(nodeslist(K))[1].number_of_nodes() > 1:
+		AlgorithmRecovery(Best.get(nodeslist(K))[1], f)
+
+def nodeslist(U):
+	return "".join(sorted(U.nodes()))
 
 
 Ci = {}
 Best = {}
 for subgr in subgrs:
-	Ci[sorted(subgr.nodes())] = float("inf")
+	Ci[nodeslist(subgr)] = float("inf")
 for vertex in G.nodes():
 	Ci[vertex] = G.node[vertex]['df']  # complexity for each vertex is its df
 
 for w in range (2, G.number_of_nodes()+1):  # size of a subset
-	for K in filter(lambda x: len(x) == w, subsets): # all possible subsets of a given size
-		dfK = computedf(nx.subgraph(G, K))
-		listJ = chain.from_iterable(combinations(K, r) for r in range(1, int(len(K)/2) + 1))
-		for J in listJ:
-			L = list(set(K) - set(J))
-			if Ci[K] > max(Ci.get(J), Ci.get(L), dfK):
-				Ci[K] = max(Ci.get(J), Ci.get(L), dfK)
-				Best[K] = [J, L] 
+	for K in filter(lambda x: x.number_of_nodes() == w, subgrs): # all possible subsets of a given size
+		dfK = computedf(K)
+		halves = chain.from_iterable(combinations(K.nodes(), r) for r in range(1, int(K.number_of_nodes()/2) + 1))
+		for halve in halves:
+			J = nx.subgraph(K, halve)
+			L = nx.subgraph(K, list(set(K.nodes()) - set(halve)))
+			if Ci[nodeslist(K)] > max(Ci.get(nodeslist(J)), Ci.get(nodeslist(L)), dfK):
+				Ci[nodeslist(K)] = max(Ci.get(nodeslist(J)), Ci.get(nodeslist(L)), dfK)
+				Best[nodeslist(K)] = [J, L]
 
-print(Best.get(G.nodes))
+# print(Best.get(nodeslist(G))[1].nodes())
+print("Complexity is", Ci[nodeslist(G)])
 
-fi = open("solution.txt", 'w')
-AlgorithmRecovery(G.nodes(), fi)
-fi.close()
-
-
-
-
-# Writing solution to a file
-# f = open("solution.txt", 'w')
-# for line in solution:
-# 	first = True
-# 	for element in line:
-# 		if first == True:
-# 			first = False
-# 		else:
-# 			f.write("   |   ")
-# 		f.write(" ".join(sorted(element.nodes())))
-# 	f.write("\n")
-# f.close()
-
+solution = {}
+AlgorithmRecovery(G, 0)
