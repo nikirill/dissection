@@ -1,7 +1,11 @@
-import numpy as np
-from itertools import chain, combinations
-import networkx as nx
-import matplotlib.pyplot as plt
+try:
+	import numpy as np
+	from itertools import chain, combinations
+	import networkx as nx
+	import matplotlib.pyplot as plt
+	from pygraphviz import *
+except:
+	raise
 
 
 G = nx.Graph()
@@ -17,10 +21,9 @@ G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), (
 				 ('C1','Kc'), ('C2','Kc'), ('C3','Kc'), ('C4','Kc'), ('C1','D'), ('C2','D'), 
 				 ('C3','D'), ('C4','D')])
 
-# nx.draw(G)
-# plt.show()
 
 # Generate all possible subsets of vertices
+# and form subgraphs out of them
 subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G.nodes()) + 1))
 subgrs = []
 for subset in subsets:
@@ -40,43 +43,59 @@ for subset in subsets:
 # A function for computing a degree of freedom of a vertex subset
 def computedf(U):
 	dfU = 0
-	for vertex in U.nodes():
+	for vertex in U:
 		dfU += U.node[vertex]['df']
 	dfU -= U.number_of_edges()
 	return dfU
 
-def AlgorithmRecovery(K, i):
-	f.write(" ".join(sorted(K.nodes())))
-	f.write("\n")
-	if Best.get(nodeslist(K))[0].number_of_nodes() > 1:
-		AlgorithmRecovery(Best.get(nodeslist(K))[0], f)
-	if Best.get(nodeslist(K))[1].number_of_nodes() > 1:
-		AlgorithmRecovery(Best.get(nodeslist(K))[1], f)
-
+# Returns a string of nodes in U
 def nodeslist(U):
 	return "".join(sorted(U.nodes()))
 
+def recoverTree(parent):
+	for child in Resolution.successors_iter(parent):
+		solution.append(child)
+		if len(child) > 1:
+			recoverTree(child)
 
-Ci = {}
-Best = {}
-for subgr in subgrs:
-	Ci[nodeslist(subgr)] = float("inf")
-for vertex in G.nodes():
-	Ci[vertex] = G.node[vertex]['df']  # complexity for each vertex is its df
 
-for w in range (2, G.number_of_nodes()+1):  # size of a subset
-	for K in filter(lambda x: x.number_of_nodes() == w, subgrs): # all possible subsets of a given size
+# Create dict with complexities for all subsets set to infinity
+# Then set complexities of trivial subsets (vertices) equal to
+# their dfs
+Ci = {nodeslist(subgr): float("inf") for subgr in subgrs}
+Resolution = nx.DiGraph()
+for vertex in G:
+	Ci[vertex] = G.node[vertex]['df']
+	Resolution.add_node(vertex)
+
+best = []
+for w in range (2, len(G)+1):  # size of a subset
+	for K in filter(lambda x: len(x) == w, subgrs): # all possible subsets of a given size
 		dfK = computedf(K)
-		halves = chain.from_iterable(combinations(K.nodes(), r) for r in range(1, int(K.number_of_nodes()/2) + 1))
+		halves = chain.from_iterable(combinations(K.nodes(), r) for r in range(1, int(len(K)/2) + 1))
+		Resolution.add_node(nodeslist(K))
 		for halve in halves:
 			J = nx.subgraph(K, halve)
 			L = nx.subgraph(K, list(set(K.nodes()) - set(halve)))
 			if Ci[nodeslist(K)] > max(Ci.get(nodeslist(J)), Ci.get(nodeslist(L)), dfK):
 				Ci[nodeslist(K)] = max(Ci.get(nodeslist(J)), Ci.get(nodeslist(L)), dfK)
-				Best[nodeslist(K)] = [J, L]
+				best = [J, L]
+		Resolution.add_edge(nodeslist(K), nodeslist(best[0]))
+		Resolution.add_edge(nodeslist(K), nodeslist(best[1]))
 
-# print(Best.get(nodeslist(G))[1].nodes())
 print("Complexity is", Ci[nodeslist(G)])
+solution = [nodeslist(G)]
+recoverTree(nodeslist(G))
+solGraph = nx.subgraph(Resolution, solution)
 
-solution = {}
-AlgorithmRecovery(G, 0)
+# write_dot(solGraph, 'test.dot')
+A = nx.nx_agraph.to_agraph(solGraph)
+# plt.title("Resolution Algorithm")
+# A.write("test.dot")
+A.layout(prog='dot')
+A.draw('resolution.png')
+# nx.draw_spring(solGraph)
+# nx.draw(solGraph,pos,with_labels=False,arrows=False)
+# draw_graphviz(solGraph, pos)
+# print(nx.node_connected_component(Resolution, nodeslist(G)))
+# plt.show()
