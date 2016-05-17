@@ -9,18 +9,32 @@ except:
 
 
 G = nx.Graph()
-G.add_nodes_from(['A', 'B1', 'B2', 'B3', 'B4', 'Kb', 'C1', 'C2', 'C3', 'C4', 'Kc', 'D'])
+# G.add_nodes_from(['A', 'B1', 'B2', 'B3', 'B4', 'Kb', 'C1', 'C2', 'C3', 'C4', 'Kc', 'D'])
+
+# # Indicate degree of freedom for every vertex
+# nx.set_node_attributes(G, 'df', {'A':1, 'B1':2, 'B2':2, 'B3':2, 'B4':2, 'Kb':1, 'C1':2, 'C2':2, 
+# 									'C3':2, 'C4':2, 'Kc':1, 'D':1})
+
+# # Decribe edges in the graph
+# G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), ('B2','Kb'),
+# 				 ('B3','Kb'), ('B4','Kb'), ('B1','C1'), ('B2','C2'), ('B3','C3'), ('B4','C4'), 
+# 				 ('C1','Kc'), ('C2','Kc'), ('C3','Kc'), ('C4','Kc'), ('C1','D'), ('C2','D'), 
+# 				 ('C3','D'), ('C4','D')])
+
+G.add_nodes_from(['A1', 'A2', 'A3', 'A4', 'Ka', 'B1', 'B2', 'B3', 'B4', 'Kb', 'C1', 'C2', 'C3', 'C4', 'Kc', 'D'])
 
 # Indicate degree of freedom for every vertex
-nx.set_node_attributes(G, 'df', {'A':1, 'B1':2, 'B2':2, 'B3':2, 'B4':2, 'Kb':1, 'C1':2, 'C2':2, 
+nx.set_node_attributes(G, 'df', {'A1':1, 'A2':1, 'A3':1, 'A4':1, 'Ka':1, 'B1':2, 'B2':2, 'B3':2, 'B4':2, 'Kb':1, 'C1':2, 'C2':2, 
 									'C3':2, 'C4':2, 'Kc':1, 'D':1})
 
 # Decribe edges in the graph
-G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), ('B2','Kb'),
+G.add_edges_from([('A1','B1'), ('A2','B2'), ('A3','B3'), ('A4','B4'), ('A1','Ka'), ('A2','Ka'),
+				 ('A3','Ka'), ('A4','Ka'), ('B1','Kb'), ('B2','Kb'),
 				 ('B3','Kb'), ('B4','Kb'), ('B1','C1'), ('B2','C2'), ('B3','C3'), ('B4','C4'), 
 				 ('C1','Kc'), ('C2','Kc'), ('C3','Kc'), ('C4','Kc'), ('C1','D'), ('C2','D'), 
 				 ('C3','D'), ('C4','D')])
 
+# nx.write_gml(G, '4graph_reduced.gml')
 
 # Generate all possible subsets of vertices
 # and form subgraphs out of them
@@ -28,17 +42,10 @@ subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G
 subgrs = []
 for subset in subsets:
 	subgrs.append(nx.subgraph(G, subset))
-
-# Find all possible joints with defined complexity
 # for subset in subsets:
-# 	sbgr = nx.subgraph(G, subset)
-# 	if nx.is_connected(sbgr):
-# 		fdegree = 0
-# 		for vertex in sbgr.nodes():
-# 			fdegree += sbgr.node[vertex]['df']
-# 		fdegree -= sbgr.number_of_edges()
-# 		if fdegree <= limit:
-# 			subgrs.append(sbgr)
+# 	if nx.is_connected(nx.subgraph(G, subset)):
+# 		subgrs.append(nx.subgraph(G, subset))
+
 
 # A function for computing a degree of freedom of a vertex subset
 def computedf(U):
@@ -83,15 +90,16 @@ for w in range (2, len(G)+1):  # size of a subset
 		Resolution.add_edge(nodeslist(K), nodeslist(best[0]))
 		Resolution.add_edge(nodeslist(K), nodeslist(best[1]))
 
-print("Complexity is", Ci[nodeslist(G)])
+# Retrieving resolution algortihm with minimal complexity
+print('The optimal complexity is N^%d' % Ci[nodeslist(G)])
 solList = [nodeslist(G)]
 recoverTree(nodeslist(G))
 solGraph = nx.subgraph(Resolution, solList)
 
-
+# Plotting the resolution algorithm
 ToPlot = nx.nx_agraph.to_agraph(solGraph)
-# A = nx.nx_agraph.to_agraph(solGraph.reverse())
-# A.write("test.dot")
+# ToPlot = nx.nx_agraph.to_agraph(solGraph.reverse())
+# ToPlot.write("test.dot")
 ToPlot.layout(prog='dot')
 ToPlot.draw('resolution.png')
 # nx.draw(solGraph,pos,with_labels=False,arrows=False)
