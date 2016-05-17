@@ -54,7 +54,7 @@ def nodeslist(U):
 
 def recoverTree(parent):
 	for child in Resolution.successors_iter(parent):
-		solution.append(child)
+		solList.append(child)
 		if len(child) > 1:
 			recoverTree(child)
 
@@ -84,18 +84,14 @@ for w in range (2, len(G)+1):  # size of a subset
 		Resolution.add_edge(nodeslist(K), nodeslist(best[1]))
 
 print("Complexity is", Ci[nodeslist(G)])
-solution = [nodeslist(G)]
+solList = [nodeslist(G)]
 recoverTree(nodeslist(G))
-solGraph = nx.subgraph(Resolution, solution)
+solGraph = nx.subgraph(Resolution, solList)
 
-# write_dot(solGraph, 'test.dot')
-A = nx.nx_agraph.to_agraph(solGraph)
-# plt.title("Resolution Algorithm")
+
+ToPlot = nx.nx_agraph.to_agraph(solGraph)
+# A = nx.nx_agraph.to_agraph(solGraph.reverse())
 # A.write("test.dot")
-A.layout(prog='dot')
-A.draw('resolution.png')
-# nx.draw_spring(solGraph)
+ToPlot.layout(prog='dot')
+ToPlot.draw('resolution.png')
 # nx.draw(solGraph,pos,with_labels=False,arrows=False)
-# draw_graphviz(solGraph, pos)
-# print(nx.node_connected_component(Resolution, nodeslist(G)))
-# plt.show()
