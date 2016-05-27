@@ -1,6 +1,6 @@
 try:
-	import numpy as np
-	import threading
+	import numpy
+	import multiprocessing as mp
 	from itertools import chain, combinations
 	import networkx as nx
 	import matplotlib.pyplot as plt
@@ -20,13 +20,41 @@ def computedf(U):
 
 # Returns a string of nodes in U
 def vlist(U):
-	return "".join(sorted(U))
+	if len(U) > 1:
+		return "".join(sorted(U))
+	else:
+		return "".join(U)
 
 def recoverTree(parent):
 	for child in Resolution.successors_iter(parent):
 		solList.append(child)
 		if len(child) > 1:
 			recoverTree(child)
+
+def setOverlap(T):
+	Js = list(chain.from_iterable(combinations(T, r) for r in range(1, len(T))))
+	for x,y in Js, Js:
+		if set(x+y) == set(T):
+			return x,y
+
+def levelSearch(K):
+	# print(K)
+	global Ci, Resolution
+	best = []
+	dfK = computedf(K)
+	Resolution.add_node(vlist(K))
+	# Js = list(chain.from_iterable(combinations(K, r) for r in range(1, len(K))))
+	# print(K, "and", Js)
+	# for J, L in filter(lambda x,y: set(x+y) == set(K), Js):
+	for J, L in setOverlap(K):
+		# print(K, Ci[vlist(J)], Ci[vlist(L)], dfK)
+		if Ci[vlist(K)] > max(Ci[vlist(J)], Ci[vlist(L)], dfK):
+			Ci[vlist(K)] = max(Ci[vlist(J)], Ci[vlist(L)], dfK)
+			best = [vlist(J), vlist(L)]
+			# print("best", K, max(Ci[vlist(J)], Ci[vlist(L)], dfK))
+	# print(Resolution.nodes())
+	Resolution.add_edge(vlist(K), vlist(best[0]))
+	Resolution.add_edge(vlist(K), vlist(best[1]))
 
 
 G = nx.Graph()
@@ -68,28 +96,26 @@ for vertex in G:								# Then set complexities of trivial subsets (vertices) eq
 	Ci[vertex] = G.node[vertex]['df']
 	Resolution.add_node(vertex)
 
-best = []
 for w in range (2, len(G)+1):  # size of a subset
-	for K in filter(lambda x: len(x) == w, subsets): # all possible subsets of a given size
-		dfK = computedf(K)
-		Resolution.add_node(vlist(K))
-		Js = list(chain.from_iterable(combinations(K, r) for r in range(1, len(K))))
-		for J in Js:
-			for L in filter(lambda y: set(y + J) == set(K), Js):
-				if Ci[vlist(K)] > max(Ci[vlist(J)], Ci[vlist(L)], dfK):
-					Ci[vlist(K)] = max(Ci[vlist(J)], Ci[vlist(L)], dfK)
-					best = [nx.subgraph(G, L), nx.subgraph(G, J)]
-		Resolution.add_edge(vlist(K), vlist(best[0].nodes()))
-		Resolution.add_edge(vlist(K), vlist(best[1].nodes()))
+	# jobs = []
+	# lsets = list(filter(lambda x: len(x) == w, subsets))
+	# p1 = mp.Process(target=levelSearch, args=(lsets[:int(len(lsets)/ncores)],))
+	# p2 = mp.Process(target=levelSearch, args=(lsets[int(len(lsets)/ncores):],))
+	# for p in [p1, p2]: p.start()
+	# for p in [p1, p2]: p.join()
+	pool = mp.Pool(processes=4)
+	# pool.apply(levelSearch, args=(x, Ci, Resolution,) for x in filter(lambda x: len(x) == w, subsets))
+	pool.map(levelSearch, filter(lambda x: len(x) == w, subsets))
+	pool.close()
+	pool.join()
 
-# Retrieving resolution algortihm with minimal complexity
+
 print('The optimal complexity is N^%d' % Ci[vlist(G.nodes())])
 solList = [vlist(G.nodes())]
-recoverTree(vlist(G.nodes()))
+recoverTree(vlist(G.nodes()))	# Retrieving resolution algortihm with minimal complexity
 solGraph = nx.subgraph(Resolution, solList)
 
-# Plotting the resolution algorithm
-ToPlot = nx.nx_agraph.to_agraph(solGraph)
+ToPlot = nx.nx_agraph.to_agraph(solGraph)	# Plotting the resolution algorithm
 ToPlot.layout(prog='dot')
 ToPlot.draw('resolution.png')
 # ToPlot = nx.nx_agraph.to_agraph(solGraph.reverse())
