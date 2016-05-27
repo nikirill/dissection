@@ -1,5 +1,6 @@
 try:
 	import numpy as np
+	import threading
 	from itertools import chain, combinations
 	import networkx as nx
 	import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ except:
 
 
 G = nx.Graph()
+
 G.add_nodes_from(['A', 'B1', 'B2', 'B3', 'B4', 'Kb', 'C1', 'C2', 'C3', 'C4', 'Kc', 'D'])
 
 # Indicate degree of freedom for every vertex
@@ -38,14 +40,13 @@ G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), (
 
 # Generate all possible subsets of vertices
 # and form subgraphs out of them
-subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G.nodes()) + 1))
+subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G) + 1))
 subgrs = []
 for subset in subsets:
 	subgrs.append(nx.subgraph(G, subset))
 # for subset in subsets:
 # 	if nx.is_connected(nx.subgraph(G, subset)):
 # 		subgrs.append(nx.subgraph(G, subset))
-
 
 # A function for computing a degree of freedom of a vertex subset
 def computedf(U):
@@ -65,7 +66,6 @@ def recoverTree(parent):
 		if len(child) > 1:
 			recoverTree(child)
 
-
 # Create dict with complexities for all subsets set to infinity
 # Then set complexities of trivial subsets (vertices) equal to
 # their dfs
@@ -76,17 +76,18 @@ for vertex in G:
 	Resolution.add_node(vertex)
 
 best = []
-for w in range (2, len(G)+1):  # size of a subset
-	for K in filter(lambda x: len(x) == w, subgrs): # all possible subsets of a given size
+for w in range (2, len(G)+1):  # size of a subgraph
+	for K in filter(lambda x: len(x) == w, subgrs): # all possible subgraphs of a given size
 		dfK = computedf(K)
-		halves = chain.from_iterable(combinations(K.nodes(), r) for r in range(1, int(len(K)/2) + 1))
 		Resolution.add_node(nodeslist(K))
-		for halve in halves:
-			J = nx.subgraph(K, halve)
-			L = nx.subgraph(K, list(set(K.nodes()) - set(halve)))
-			if Ci[nodeslist(K)] > max(Ci.get(nodeslist(J)), Ci.get(nodeslist(L)), dfK):
-				Ci[nodeslist(K)] = max(Ci.get(nodeslist(J)), Ci.get(nodeslist(L)), dfK)
-				best = [J, L]
+		Js = list(chain.from_iterable(combinations(K.nodes(), r) for r in range(1, len(K))))
+		for J in Js:
+			JG = nx.subgraph(K, J)
+			for L in filter(lambda y: set(y + J) == set(K.nodes()), Js):
+				LG = nx.subgraph(K, L)
+				if Ci[nodeslist(K)] > max(Ci[nodeslist(JG)], Ci[nodeslist(LG)], dfK):
+					Ci[nodeslist(K)] = max(Ci[nodeslist(JG)], Ci[nodeslist(LG)], dfK)
+					best = [JG, LG]
 		Resolution.add_edge(nodeslist(K), nodeslist(best[0]))
 		Resolution.add_edge(nodeslist(K), nodeslist(best[1]))
 
