@@ -9,6 +9,26 @@ except:
 	raise
 
 
+# A function for computing a degree of freedom of a vertex subset
+def computedf(U):
+	dfU = 0
+	UG = nx.subgraph(G, U)
+	for vertex in UG:
+		dfU += UG.node[vertex]['df']
+	dfU -= UG.number_of_edges()
+	return dfU
+
+# Returns a string of nodes in U
+def vlist(U):
+	return "".join(sorted(U))
+
+def recoverTree(parent):
+	for child in Resolution.successors_iter(parent):
+		solList.append(child)
+		if len(child) > 1:
+			recoverTree(child)
+
+
 G = nx.Graph()
 
 G.add_nodes_from(['A', 'B1', 'B2', 'B3', 'B4', 'Kb', 'C1', 'C2', 'C3', 'C4', 'Kc', 'D'])
@@ -38,69 +58,40 @@ G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), (
 
 # nx.write_gml(G, '4graph_reduced.gml')
 
-# Generate all possible subsets of vertices
-# and form subgraphs out of them
-subsets = chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G) + 1))
-subgrs = []
-for subset in subsets:
-	subgrs.append(nx.subgraph(G, subset))
-# for subset in subsets:
-# 	if nx.is_connected(nx.subgraph(G, subset)):
-# 		subgrs.append(nx.subgraph(G, subset))
 
-# A function for computing a degree of freedom of a vertex subset
-def computedf(U):
-	dfU = 0
-	for vertex in U:
-		dfU += U.node[vertex]['df']
-	dfU -= U.number_of_edges()
-	return dfU
+# Generate all possible subsets of vertices and form subgraphs out of them
+subsets = list(chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G) + 1)))
 
-# Returns a string of nodes in U
-def nodeslist(U):
-	return "".join(sorted(U.nodes()))
-
-def recoverTree(parent):
-	for child in Resolution.successors_iter(parent):
-		solList.append(child)
-		if len(child) > 1:
-			recoverTree(child)
-
-# Create dict with complexities for all subsets set to infinity
-# Then set complexities of trivial subsets (vertices) equal to
-# their dfs
-Ci = {nodeslist(subgr): float("inf") for subgr in subgrs}
+Ci = {vlist(subset): float("inf") for subset in subsets}	# Create dict with complexities for all subsets set to infinity
 Resolution = nx.DiGraph()
-for vertex in G:
+for vertex in G:								# Then set complexities of trivial subsets (vertices) equal to their dfs
 	Ci[vertex] = G.node[vertex]['df']
 	Resolution.add_node(vertex)
 
 best = []
-for w in range (2, len(G)+1):  # size of a subgraph
-	for K in filter(lambda x: len(x) == w, subgrs): # all possible subgraphs of a given size
+for w in range (2, len(G)+1):  # size of a subset
+	for K in filter(lambda x: len(x) == w, subsets): # all possible subsets of a given size
 		dfK = computedf(K)
-		Resolution.add_node(nodeslist(K))
-		Js = list(chain.from_iterable(combinations(K.nodes(), r) for r in range(1, len(K))))
+		Resolution.add_node(vlist(K))
+		Js = list(chain.from_iterable(combinations(K, r) for r in range(1, len(K))))
 		for J in Js:
-			JG = nx.subgraph(K, J)
-			for L in filter(lambda y: set(y + J) == set(K.nodes()), Js):
-				LG = nx.subgraph(K, L)
-				if Ci[nodeslist(K)] > max(Ci[nodeslist(JG)], Ci[nodeslist(LG)], dfK):
-					Ci[nodeslist(K)] = max(Ci[nodeslist(JG)], Ci[nodeslist(LG)], dfK)
-					best = [JG, LG]
-		Resolution.add_edge(nodeslist(K), nodeslist(best[0]))
-		Resolution.add_edge(nodeslist(K), nodeslist(best[1]))
+			for L in filter(lambda y: set(y + J) == set(K), Js):
+				if Ci[vlist(K)] > max(Ci[vlist(J)], Ci[vlist(L)], dfK):
+					Ci[vlist(K)] = max(Ci[vlist(J)], Ci[vlist(L)], dfK)
+					best = [nx.subgraph(G, L), nx.subgraph(G, J)]
+		Resolution.add_edge(vlist(K), vlist(best[0].nodes()))
+		Resolution.add_edge(vlist(K), vlist(best[1].nodes()))
 
 # Retrieving resolution algortihm with minimal complexity
-print('The optimal complexity is N^%d' % Ci[nodeslist(G)])
-solList = [nodeslist(G)]
-recoverTree(nodeslist(G))
+print('The optimal complexity is N^%d' % Ci[vlist(G.nodes())])
+solList = [vlist(G.nodes())]
+recoverTree(vlist(G.nodes()))
 solGraph = nx.subgraph(Resolution, solList)
 
 # Plotting the resolution algorithm
 ToPlot = nx.nx_agraph.to_agraph(solGraph)
-# ToPlot = nx.nx_agraph.to_agraph(solGraph.reverse())
-# ToPlot.write("test.dot")
 ToPlot.layout(prog='dot')
 ToPlot.draw('resolution.png')
+# ToPlot = nx.nx_agraph.to_agraph(solGraph.reverse())
+# ToPlot.write("test.dot")
 # nx.draw(solGraph,pos,with_labels=False,arrows=False)
