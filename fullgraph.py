@@ -1,10 +1,9 @@
 try:
-	import numpy
 	import multiprocessing as mp
 	from itertools import chain, combinations
 	import networkx as nx
-	import matplotlib.pyplot as plt
 	from pygraphviz import *
+	import input
 except:
 	raise
 
@@ -32,48 +31,20 @@ def recoverTree(parent):
 		if len(child) > 1:
 			recoverTree(child)
 
-def levelSearch(K):
+def levelSearch(H):
 	best = []
-	dfK = computedf(K)
-	ciK = Ci[vlist(K)]
-	Js = list(chain.from_iterable(combinations(K, r) for r in range(1, len(K))))
+	dfH = computedf(H)
+	ciH = Ci[vlist(H)]
+	Js = list(chain.from_iterable(combinations(H, r) for r in range(1, len(H))))
 	for J in Js:
-			for L in filter(lambda y: set(y + J) == set(K), Js):
-				if ciK > max(Ci[vlist(J)], Ci[vlist(L)], dfK):
-					ciK = max(Ci[vlist(J)], Ci[vlist(L)], dfK)
+			for L in filter(lambda y: set(y + J) == set(H), Js):
+				if ciH > max(Ci[vlist(J)], Ci[vlist(L)], dfH):
+					ciH = max(Ci[vlist(J)], Ci[vlist(L)], dfH)
 					best = [vlist(J), vlist(L)]
-	return (vlist(K), best[0], best[1], ciK)
+	return (vlist(H), best[0], best[1], ciH)
 
 
-G = nx.Graph()
-
-G.add_nodes_from(['A', 'B1', 'B2', 'B3', 'B4', 'Kb', 'C1', 'C2', 'C3', 'C4', 'Kc', 'D'])
-
-# Indicate degree of freedom for every vertex
-nx.set_node_attributes(G, 'df', {'A':1, 'B1':2, 'B2':2, 'B3':2, 'B4':2, 'Kb':1, 'C1':2, 'C2':2, 
-									'C3':2, 'C4':2, 'Kc':1, 'D':1})
-
-# Decribe edges in the graph
-G.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'), ('A','B4'), ('B1','Kb'), ('B2','Kb'),
-				 ('B3','Kb'), ('B4','Kb'), ('B1','C1'), ('B2','C2'), ('B3','C3'), ('B4','C4'), 
-				 ('C1','Kc'), ('C2','Kc'), ('C3','Kc'), ('C4','Kc'), ('C1','D'), ('C2','D'), 
-				 ('C3','D'), ('C4','D')])
-
-# G.add_nodes_from(['A1', 'A2', 'A3', 'A4', 'Ka', 'B1', 'B2', 'B3', 'B4', 'Kb', 'C1', 'C2', 'C3', 'C4', 'Kc', 'D'])
-
-# # Indicate degree of freedom for every vertex
-# nx.set_node_attributes(G, 'df', {'A1':1, 'A2':1, 'A3':1, 'A4':1, 'Ka':1, 'B1':2, 'B2':2, 'B3':2, 'B4':2, 'Kb':1, 'C1':2, 'C2':2, 
-# 									'C3':2, 'C4':2, 'Kc':1, 'D':1})
-
-# # Decribe edges in the graph
-# G.add_edges_from([('A1','B1'), ('A2','B2'), ('A3','B3'), ('A4','B4'), ('A1','Ka'), ('A2','Ka'),
-# 				 ('A3','Ka'), ('A4','Ka'), ('B1','Kb'), ('B2','Kb'),
-# 				 ('B3','Kb'), ('B4','Kb'), ('B1','C1'), ('B2','C2'), ('B3','C3'), ('B4','C4'), 
-# 				 ('C1','Kc'), ('C2','Kc'), ('C3','Kc'), ('C4','Kc'), ('C1','D'), ('C2','D'), 
-# 				 ('C3','D'), ('C4','D')])
-
-# nx.write_gml(G, '4graph_reduced.gml')
-
+G = input.Gph
 
 # Generate all possible subsets of vertices and form subgraphs out of them
 subsets = list(chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G) + 1)))
@@ -84,11 +55,11 @@ for vertex in G:								# Then set complexities of trivial subsets (vertices) eq
 	Ci[vertex] = G.node[vertex]['df']
 	Resolution.add_node(vertex)
 
-for w in range (2, len(G)+1):  # size of a subset
-	print(w)
+for k in range (2, len(G)+1):  # size of a subset
+	print(k)
 	levelsets = []
 	pool = mp.Pool(processes=mp.cpu_count())
-	levelsets = pool.map(levelSearch, filter(lambda x: len(x) == w, subsets))
+	levelsets = pool.map(levelSearch, filter(lambda x: len(x) == k, subsets))
 	pool.close()
 	pool.join()
 	# print(levelsets)
