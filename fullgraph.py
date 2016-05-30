@@ -18,9 +18,12 @@ def computedf(U):
 	dfU -= UG.number_of_edges()
 	return dfU
 
-# Returns a string of nodes in U
+# Returns a string of concatenated vertex names in U
 def vlist(U):
-	return "".join(sorted(U))
+	if type(U) == tuple:
+		return "".join(sorted(U))
+	else:
+		return "".join(U)
 
 def recoverTree(parent):
 	for child in Resolution.successors_iter(parent):
@@ -70,6 +73,7 @@ for vertex in G:								# Then set complexities of trivial subsets (vertices) eq
 
 best = []
 for w in range (2, len(G)+1):  # size of a subset
+	print(w)
 	for K in filter(lambda x: len(x) == w, subsets): # all possible subsets of a given size
 		dfK = computedf(K)
 		Resolution.add_node(vlist(K))
@@ -78,14 +82,14 @@ for w in range (2, len(G)+1):  # size of a subset
 			for L in filter(lambda y: set(y + J) == set(K), Js):
 				if Ci[vlist(K)] > max(Ci[vlist(J)], Ci[vlist(L)], dfK):
 					Ci[vlist(K)] = max(Ci[vlist(J)], Ci[vlist(L)], dfK)
-					best = [nx.subgraph(G, L), nx.subgraph(G, J)]
-		Resolution.add_edge(vlist(K), vlist(best[0].nodes()))
-		Resolution.add_edge(vlist(K), vlist(best[1].nodes()))
+					best = [vlist(L), vlist(J)]
+		Resolution.add_edge(vlist(K), best[0])
+		Resolution.add_edge(vlist(K), best[1])
 
 # Retrieving resolution algortihm with minimal complexity
-print('The optimal complexity is N^%d' % Ci[vlist(G.nodes())])
-solList = [vlist(G.nodes())]
-recoverTree(vlist(G.nodes()))
+print('The optimal complexity is N^%d' % Ci[vlist(tuple(G.nodes()))])
+solList = [vlist(tuple(G.nodes()))]
+recoverTree(vlist(tuple(G.nodes())))
 solGraph = nx.subgraph(Resolution, solList)
 
 # Plotting the resolution algorithm
