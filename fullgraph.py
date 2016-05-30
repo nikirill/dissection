@@ -41,7 +41,7 @@ def possiblePairs(T):
 				if set(x+y) == set(T):
 					if (y,x) not in pairs:
 						pairs.append((x,y))
-	return pairs
+						yield((x,y))
 
 def levelSearch(K):
 	best = []
