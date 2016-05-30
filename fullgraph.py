@@ -32,26 +32,17 @@ def recoverTree(parent):
 		if len(child) > 1:
 			recoverTree(child)
 
-def possiblePairs(T):
-	Js = list(chain.from_iterable(combinations(T, r) for r in range(1, len(T))))
-	pairs = []
-	for x in Js:
-		for y in Js:
-			if x != y:
-				if set(x+y) == set(T):
-					if (y,x) not in pairs:
-						pairs.append((x,y))
-						yield((x,y))
-
 def levelSearch(K):
 	best = []
 	dfK = computedf(K)
 	ciK = Ci[vlist(K)]
-	for pair in possiblePairs(K):
-		if ciK > max(Ci[vlist(pair[0])], Ci[vlist(pair[1])], dfK):
-			ciK = max(Ci[vlist(pair[0])], Ci[vlist(pair[1])], dfK)
-			best = [vlist(pair[0]), vlist(pair[1])]
-	return (vlist(K), vlist(best[0]), vlist(best[1]), ciK)
+	Js = list(chain.from_iterable(combinations(K, r) for r in range(1, len(K))))
+	for J in Js:
+			for L in filter(lambda y: set(y + J) == set(K), Js):
+				if ciK > max(Ci[vlist(J)], Ci[vlist(L)], dfK):
+					ciK = max(Ci[vlist(J)], Ci[vlist(L)], dfK)
+					best = [vlist(J), vlist(L)]
+	return (vlist(K), best[0], best[1], ciK)
 
 
 G = nx.Graph()
