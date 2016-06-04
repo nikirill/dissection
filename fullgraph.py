@@ -44,7 +44,7 @@ def levelSearch(H):
 	return (vlist(H), best[0], best[1], ciH)
 
 
-G = input.G4
+G = input.G5
 
 # Generate all possible subsets of vertices and form subgraphs out of them
 subsets = list(chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G) + 1)))
@@ -81,4 +81,3 @@ ToPlot.layout(prog='dot')
 ToPlot.draw('resolution.png')
 # ToPlot = nx.nx_agraph.to_agraph(solGraph.reverse())
 # ToPlot.write("test.dot")
-# nx.draw(solGraph,pos,with_labels=False,arrows=False)
