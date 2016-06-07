@@ -44,7 +44,8 @@ def levelSearch(H):
 	return (vlist(H), best[0], best[1], ciH)
 
 
-G = input.G5
+# Choose a graph from the input file to be evaluated
+G = input.G4
 
 # Generate all possible subsets of vertices and form subgraphs out of them
 subsets = list(chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G) + 1)))
@@ -52,8 +53,7 @@ subsets = list(chain.from_iterable(combinations(G.nodes(), r) for r in range(1, 
 Ci = {vlist(subset): float("inf") for subset in subsets}	# Create dict with complexities for all subsets set to infinity
 Resolution = nx.DiGraph()
 for vertex in G:								# Then set complexities of trivial subsets (vertices) equal to their dfs
-	# Ci[vertex] = G.node[vertex]['df']
-	Ci[vertex] = 0
+	Ci[vertex] = G.node[vertex]['df']
 	Resolution.add_node(vertex)
 
 for k in range (2, len(G)+1):  # size of a subset
