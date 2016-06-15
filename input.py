@@ -20,6 +20,24 @@ G3.add_edges_from([('A','B1'), ('A','B2'), ('A','B3'),
 						('B1','C'), ('B2','C'), ('B3','C')])
 
 
+# 3-block encryption cipher with only two keys
+# 		A - B - A'
+G3R = nx.Graph()
+
+G3R.add_nodes_from(['A1', 'A2', 'A3', 'Kac', 'B1', 'B2', 'B3', 'Kb', 'C1', 'C2', 'C3'])
+
+# Indidate degree of freedom for every vertex
+nx.set_node_attributes(G3R, 'df', {'A1':1, 'A2':1, 'A3':2, 'Kac':1, 
+									'B1':2, 'B2':2, 'B3':2, 'Kb':1, 
+									'C1':1, 'C2':1, 'C3':1})
+
+# Dedribe edges in the graph
+G3R.add_edges_from([('A1','B1'), ('A2','B2'), ('A3','B3'), 
+						('A1','Kac'), ('A2','Kac'), ('A3','Kac'),
+						('B1','Kb'), ('B2','Kb'), ('B3','Kb'),
+						('B1','C1'), ('B2','C2'), ('B3','C3'),
+						('Kac','C1'), ('Kac','C2'), ('Kac','C3')])
+
 # 4-block encryption cipher
 # 		A - B - C - D
 G4 = nx.Graph()
