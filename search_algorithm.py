@@ -4,6 +4,7 @@ try:
 	import networkx as nx
 	from pygraphviz import *
 	import input
+	from datetime import datetime
 except:
 	raise
 
@@ -57,7 +58,10 @@ for vertex in G:								# Then set complexities of trivial subsets (vertices) eq
 	Resolution.add_node(vertex)
 
 for k in range (2, len(G)+1):  # size of a subset
-	print(k)
+	# print(k)
+	fprog = open("progress.txt", "a")
+	fprog.write(str(datetime.now()) + " : " + str(k) + "/" + str(len(G)) + "\n")
+	fprog.close()
 	levelsets = []
 	pool = mp.Pool(processes=mp.cpu_count())
 	levelsets = pool.map(levelSearch, filter(lambda x: len(x) == k, subsets))
@@ -69,7 +73,6 @@ for k in range (2, len(G)+1):  # size of a subset
 		Resolution.add_node(parent)
 		Resolution.add_edge(parent, child1)
 		Resolution.add_edge(parent, child2)
-
 
 print('The optimal complexity is N^%d' % Ci[vlist(tuple(G.nodes()))])
 solList = [vlist(tuple(G.nodes()))]
