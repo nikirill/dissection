@@ -45,7 +45,7 @@ def levelSearch(H):
 
 
 # Choose a graph from the input file to be evaluated
-G = input.G3
+G = input.G5M
 
 # Generate all possible subsets of vertices and form subgraphs out of them
 subsets = list(chain.from_iterable(combinations(G.nodes(), r) for r in range(1, len(G) + 1)))
